@@ -8,7 +8,7 @@ export default function OTPVerificationPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const { setAuth } = useAuthStore()
+  const { login: setAuth } = useAuthStore()
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
 
@@ -17,7 +17,7 @@ export default function OTPVerificationPage() {
 
   const handleOTPChange = (index: number, value: string) => {
     if (value.length > 1) return
-    
+
     const newOtp = [...otp]
     newOtp[index] = value
     setOtp(newOtp)
@@ -39,7 +39,7 @@ export default function OTPVerificationPage() {
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     const otpValue = otp.join('')
     if (otpValue.length !== 6) {
       toast.error('Please enter complete OTP')
@@ -47,11 +47,11 @@ export default function OTPVerificationPage() {
     }
 
     setLoading(true)
-    
+
     try {
       // TODO: Call API to verify OTP
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       // Mock user data
       const user = {
         userId: '123',
@@ -60,15 +60,15 @@ export default function OTPVerificationPage() {
         name: name || 'User'
       }
       const token = 'mock-jwt-token'
-      
+
       setAuth(user, token)
-      
+
       if (isRegistration) {
         toast.success('Registration successful! Welcome to YojanaSaathi')
       } else {
         toast.success(t('auth.loginSuccess'))
       }
-      
+
       navigate('/')
     } catch (error) {
       toast.error('Invalid OTP. Please try again.')
@@ -96,7 +96,7 @@ export default function OTPVerificationPage() {
       <p className="text-center text-gray-600 mb-6">
         Enter the OTP sent to {displayContact}
       </p>
-      
+
       <form onSubmit={handleVerify} className="space-y-6">
         <div className="flex justify-center gap-2">
           {otp.map((digit, index) => (

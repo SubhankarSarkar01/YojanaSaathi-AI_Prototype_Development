@@ -11,7 +11,7 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) {
-  const { t, i18n } = useTranslation()
+  const { i18n } = useTranslation()
   const navigate = useNavigate()
   const { login } = useAuthStore()
   const [mode, setMode] = useState<'login' | 'register'>(initialMode)
@@ -58,7 +58,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop with blur */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       ></div>
@@ -76,7 +76,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
         {/* Modal Content */}
         <div className="mb-6">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            {mode === 'login' 
+            {mode === 'login'
               ? (i18n.language === 'hi' ? 'लॉगिन करें' : i18n.language === 'bn' ? 'লগইন করুন' : 'Login')
               : (i18n.language === 'hi' ? 'पंजीकरण करें' : i18n.language === 'bn' ? 'নিবন্ধন করুন' : 'Register')}
           </h2>
@@ -155,11 +155,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
             disabled={loading}
             className="w-full px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
           >
-            {loading 
+            {loading
               ? (i18n.language === 'hi' ? 'प्रतीक्षा करें...' : i18n.language === 'bn' ? 'অপেক্ষা করুন...' : 'Please wait...')
               : mode === 'login'
-              ? (i18n.language === 'hi' ? 'लॉगिन करें' : i18n.language === 'bn' ? 'লগইন করুন' : 'Login')
-              : (i18n.language === 'hi' ? 'पंजीकरण करें' : i18n.language === 'bn' ? 'নিবন্ধন করুন' : 'Register')}
+                ? (i18n.language === 'hi' ? 'लॉगिन करें' : i18n.language === 'bn' ? 'লগইন করুন' : 'Login')
+                : (i18n.language === 'hi' ? 'पंजीकरण करें' : i18n.language === 'bn' ? 'নিবন্ধন করুন' : 'Register')}
           </button>
         </form>
 

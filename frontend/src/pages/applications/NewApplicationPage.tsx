@@ -18,7 +18,7 @@ interface Scheme {
 export default function NewApplicationPage() {
   const { schemeId } = useParams()
   const navigate = useNavigate()
-  const { t, i18n } = useTranslation()
+  const { i18n } = useTranslation()
   const { user, isAuthenticated } = useAuthStore()
   const [scheme, setScheme] = useState<Scheme | null>(null)
   const [loading, setLoading] = useState(true)
@@ -50,7 +50,7 @@ export default function NewApplicationPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!user?.userId) {
       toast.error('Please login to apply')
       navigate('/auth')

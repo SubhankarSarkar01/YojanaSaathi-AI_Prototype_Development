@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Search } from 'lucide-react'
+import { Plus, Edit, Trash2 } from 'lucide-react'
 import { apiClient } from '../../lib/api'
 import { toast } from 'sonner'
 
@@ -53,7 +53,7 @@ export default function AdminSchemes() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     try {
       if (editingScheme) {
         // Update existing scheme
@@ -64,7 +64,7 @@ export default function AdminSchemes() {
         await apiClient.post('/admin/schemes', formData)
         toast.success('Scheme created successfully')
       }
-      
+
       setShowAddModal(false)
       setEditingScheme(null)
       resetForm()
@@ -188,7 +188,7 @@ export default function AdminSchemes() {
             <h2 className="text-2xl font-bold mb-6">
               {editingScheme ? 'Edit Scheme' : 'Add New Scheme'}
             </h2>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
