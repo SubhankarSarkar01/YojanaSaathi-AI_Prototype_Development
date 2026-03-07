@@ -4,6 +4,7 @@ import { Search, Calendar, Tag } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { apiClient } from '../../lib/api'
 import { toast } from 'sonner'
+import VoiceSearch from '../../components/common/VoiceSearch'
 
 interface Scheme {
   scheme_id: string
@@ -21,7 +22,7 @@ interface Scheme {
 }
 
 export default function SchemesPage() {
-  const { t, i18n } = useTranslation()
+  const { i18n } = useTranslation()
   const [searchQuery, setSearchQuery] = useState('')
   const [schemes, setSchemes] = useState<Scheme[]>([])
   const [filteredSchemes, setFilteredSchemes] = useState<Scheme[]>([])
@@ -47,6 +48,14 @@ export default function SchemesPage() {
     }
   }
 
+  const handleVoiceResult = (text: string) => {
+    setSearchQuery(text)
+    // Automatically search after voice input
+    setTimeout(() => {
+      performSearch(text)
+    }, 100)
+  }
+
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
       Agriculture: 'text-blue-600 bg-blue-50',
@@ -66,8 +75,8 @@ export default function SchemesPage() {
     return `₹${num.toLocaleString('en-IN')}`
   }
 
-  const handleSearch = () => {
-    if (!searchQuery.trim()) {
+  const performSearch = (query: string) => {
+    if (!query.trim()) {
       setFilteredSchemes(schemes)
       return
     }
@@ -75,16 +84,20 @@ export default function SchemesPage() {
     const filtered = schemes.filter((scheme) => {
       const name = i18n.language === 'hi' ? scheme.name_hi : scheme.name_en
       const description = i18n.language === 'hi' ? scheme.description_hi : scheme.description_en
-      const query = searchQuery.toLowerCase()
+      const searchTerm = query.toLowerCase()
       
       return (
-        name?.toLowerCase().includes(query) ||
-        scheme.category.toLowerCase().includes(query) ||
-        description?.toLowerCase().includes(query) ||
-        scheme.department.toLowerCase().includes(query)
+        name?.toLowerCase().includes(searchTerm) ||
+        scheme.category.toLowerCase().includes(searchTerm) ||
+        description?.toLowerCase().includes(searchTerm) ||
+        scheme.department.toLowerCase().includes(searchTerm)
       )
     })
     setFilteredSchemes(filtered)
+  }
+
+  const handleSearch = () => {
+    performSearch(searchQuery)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -125,17 +138,29 @@ export default function SchemesPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Search schemes by name or category..."
+                placeholder={i18n.language === 'hi' 
+                  ? 'नाम या श्रेणी से योजनाएं खोजें...' 
+                  : 'Search schemes by name or category...'}
                 className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg"
               />
             </div>
+            <VoiceSearch 
+              onResult={handleVoiceResult}
+              language={i18n.language}
+              className="px-4 py-4 rounded-lg"
+            />
             <button
               onClick={handleSearch}
               className="px-8 py-4 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
             >
-              Search
+              {i18n.language === 'hi' ? 'खोजें' : 'Search'}
             </button>
           </div>
+          <p className="text-sm text-gray-500 mt-2 text-center">
+            {i18n.language === 'hi' 
+              ? '🎤 माइक बटन दबाएं और अपनी भाषा में बोलें' 
+              : '🎤 Click the mic button and speak in your language'}
+          </p>
         </div>
       </div>
 

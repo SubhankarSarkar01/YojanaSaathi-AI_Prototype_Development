@@ -8,11 +8,24 @@ dotenv.config()
 
 const app: Application = express()
 const PORT = process.env.PORT || 3000
+const allowedOrigins = Array.from(
+  new Set(
+    [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'].filter(
+      (origin): origin is string => Boolean(origin)
+    )
+  )
+)
 
 // Middleware
 app.use(helmet())
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+      return
+    }
+    callback(new Error('Not allowed by CORS'))
+  },
   credentials: true
 }))
 app.use(express.json())
@@ -124,6 +137,172 @@ app.get('/api/schemes/:id', (req: Request, res: Response) => {
     status: 'success',
     data: scheme
   })
+})
+
+interface ParsedScheme {
+  name: string
+  category: string
+  benefit: string
+  description: string
+}
+
+const parseSchemesFromContext = (schemeContext: string): ParsedScheme[] => {
+  if (!schemeContext.trim()) {
+    return []
+  }
+
+  return schemeContext
+    .split(/\n\s*\n/g)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block) => {
+      const lines = block.split('\n').map((line) => line.trim())
+      const firstLine = lines.find((line) => /^\d+\.\s+/.test(line)) || ''
+      const name = firstLine.replace(/^\d+\.\s+/, '').trim() || 'Unnamed Scheme'
+      const pick = (prefix: string) =>
+        lines.find((line) => line.toLowerCase().startsWith(prefix.toLowerCase() + ':'))?.split(':').slice(1).join(':').trim() || 'N/A'
+
+      return {
+        name,
+        category: pick('Category'),
+        benefit: pick('Benefit'),
+        description: pick('Description'),
+      }
+    })
+}
+
+const getLocalChatResponse = (message: string, language: string, schemeContext: string, missingApiKey: boolean): string => {
+  const schemes = parseSchemesFromContext(schemeContext)
+  const categories = [...new Set(schemes.map((scheme) => scheme.category).filter(Boolean))]
+  const lowerMessage = message.toLowerCase()
+
+  if (/\b(hi|hello|hey|namaste|good morning|good evening)\b/i.test(message)) {
+    if (language === 'hi') {
+      return missingApiKey
+        ? 'Namaste! AI key configured nahi hai, lekin main local scheme data se madad kar sakta hoon. Category ya scheme name puchhiye.'
+        : 'Namaste! AI service issue hai. Main local scheme data se madad kar sakta hoon. Category ya scheme name puchhiye.'
+    }
+    return missingApiKey
+      ? 'Namaste! AI key is not configured, but I can help using local scheme data. Ask a category or scheme name.'
+      : 'Namaste! AI service has an issue. I can help using local scheme data. Ask a category or scheme name.'
+  }
+
+  if (/(category|categories|type|types|list)/i.test(lowerMessage) && categories.length > 0) {
+    return `Available categories:\n${categories.map((category) => `- ${category}`).join('\n')}`
+  }
+
+  const matched = schemes
+    .filter((scheme) => {
+      const text = `${scheme.name} ${scheme.category} ${scheme.description}`.toLowerCase()
+      return lowerMessage.split(/\s+/).some((word) => word.length > 2 && text.includes(word))
+    })
+    .slice(0, 3)
+
+  if (matched.length > 0) {
+    return `${language === 'hi' ? 'Mujhe relevant schemes mili:' : 'I found relevant schemes:'}\n\n${matched
+      .map((scheme, index) => `${index + 1}. ${scheme.name}\n   Category: ${scheme.category}\n   Benefit: ${scheme.benefit}`)
+      .join('\n\n')}`
+  }
+
+  if (schemes.length > 0) {
+    return `${language === 'hi' ? 'Main local data se madad kar sakta hoon. Example schemes:' : 'I can help from local data. Example schemes:'}\n${schemes
+      .slice(0, 3)
+      .map((scheme) => `- ${scheme.name} (${scheme.category})`)
+      .join('\n')}`
+  }
+
+  return language === 'hi'
+    ? 'Local scheme data available nahi hai. Kripya baad me try karein.'
+    : 'Local scheme data is not available right now. Please try again later.'
+}
+
+app.post('/api/chatbot', async (req: Request, res: Response) => {
+  const { message, language = 'en', schemeContext = '' } = req.body as {
+    message?: string
+    language?: string
+    schemeContext?: string
+  }
+
+  if (!message || typeof message !== 'string' || !message.trim()) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Message is required'
+    })
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) {
+    return res.json({
+      status: 'success',
+      data: {
+        response: getLocalChatResponse(message.trim(), language, schemeContext, true)
+      }
+    })
+  }
+
+  try {
+    const response = await fetch(`${process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta'}/models/${process.env.GEMINI_MODEL || 'gemini-2.5-flash'}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        system_instruction: {
+          parts: [
+            {
+              text: 'You are YojanaSaathi AI. Help users with Indian government schemes. Be concise and practical.'
+            }
+          ]
+        },
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text: `Language: ${language}\n\nAvailable schemes:\n${schemeContext || 'Not provided'}\n\nUser question: ${message.trim()}`
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.6,
+          topP: 0.7,
+          maxOutputTokens: 1024
+        }
+      })
+    })
+
+    if (!response.ok) {
+      return res.json({
+        status: 'success',
+        data: {
+          response: getLocalChatResponse(message.trim(), language, schemeContext, false)
+        }
+      })
+    }
+
+    const data = await response.json() as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
+    }
+
+    return res.json({
+      status: 'success',
+      data: {
+        response:
+          data.candidates?.[0]?.content?.parts
+            ?.map((part) => part.text || '')
+            .join('')
+            .trim() || 'No response from AI service.'
+      }
+    })
+  } catch {
+    return res.json({
+      status: 'success',
+      data: {
+        response: getLocalChatResponse(message.trim(), language, schemeContext, false)
+      }
+    })
+  }
 })
 
 app.post('/api/auth/register', (req: Request, res: Response) => {

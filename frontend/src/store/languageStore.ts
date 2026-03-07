@@ -12,8 +12,9 @@ interface LanguageState {
 export const useLanguageStore = create<LanguageState>()(
   persist(
     (set) => ({
-      language: 'en',
+      language: 'hi',
       setLanguage: (lang) => {
+        console.log('Changing language to:', lang)
         i18n.changeLanguage(lang)
         set({ language: lang })
       },

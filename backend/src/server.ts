@@ -14,6 +14,7 @@ import profileRoutes from './routes/profile.routes'
 import schemeRoutes from './routes/scheme.routes'
 import applicationRoutes from './routes/application.routes'
 import adminRoutes from './routes/admin.routes'
+import chatbotRoutes from './routes/chatbot.routes'
 
 // Import middleware
 import { errorHandler } from './middleware/error.middleware'
@@ -26,11 +27,24 @@ import logger from './utils/logger'
 
 const app: Application = express()
 const PORT = process.env.PORT || 3000
+const allowedOrigins = Array.from(
+  new Set(
+    [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'].filter(
+      (origin): origin is string => Boolean(origin)
+    )
+  )
+)
 
 // Middleware
 app.use(helmet())
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+      return
+    }
+    callback(new Error('Not allowed by CORS'))
+  },
   credentials: true
 }))
 app.use(express.json())
@@ -50,6 +64,7 @@ app.use('/api/profile', profileRoutes)
 app.use('/api/schemes', schemeRoutes)
 app.use('/api/applications', applicationRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/chatbot', chatbotRoutes)
 
 // 404 handler
 app.use((req: Request, res: Response) => {

@@ -6,7 +6,7 @@ import { useAuthStore } from './store/authStore'
 import MainLayout from './components/layouts/MainLayout'
 
 // Pages
-import HomePage from './pages/HomePage'
+import HomePageModern from './pages/HomePageModern'
 import AuthPage from './pages/auth/AuthPage'
 import ProfilePage from './pages/profile/ProfilePage'
 import ProfileCreatePage from './pages/profile/ProfileCreatePage'
@@ -57,7 +57,7 @@ function App() {
 
         {/* Protected Routes */}
         <Route element={<MainLayout />}>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<HomePageModern />} />
           <Route path="/schemes" element={<SchemesPage />} />
           <Route path="/schemes/:id" element={<SchemeDetailPage />} />
           <Route path="/schemes/compare" element={<SchemeComparePage />} />
