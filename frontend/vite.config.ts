@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
 export default defineConfig({
-  base: '/AiForBharat_HackaThon-YojanaSaathi-AI-/',
+  base: '/YojanaSaathi-AI_Prototype_Development/',
   plugins: [
     react(),
     VitePWA({
