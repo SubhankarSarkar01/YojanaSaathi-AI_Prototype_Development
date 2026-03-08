@@ -113,8 +113,8 @@ export class SchemeService {
 
   async searchSchemes(query: string, language: string = 'en') {
     const schemeRepo = AppDataSource.getRepository(Scheme)
-    const nameField = `name_${language}` as keyof Scheme
-    const descField = `description_${language}` as keyof Scheme
+    const nameField = `name_${language}`
+    const descField = `description_${language}`
 
     const schemes = await schemeRepo
       .createQueryBuilder('scheme')
