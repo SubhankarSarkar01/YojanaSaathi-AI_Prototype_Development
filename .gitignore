@@ -62,8 +62,9 @@ ENV/
 *.pkl
 *.pth
 *.onnx
-models/
 *.model
+ai-services/models/
+ml-models/
 
 # Database
 *.db
