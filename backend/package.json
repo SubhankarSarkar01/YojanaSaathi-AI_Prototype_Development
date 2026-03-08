@@ -8,9 +8,11 @@
     "dev:simple": "nodemon --exec ts-node src/server-simple.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "start:prod": "NODE_ENV=production node dist/server.js",
     "migrate": "ts-node migrate.ts",
     "seed": "ts-node seed.ts",
-    "test": "jest"
+    "test": "jest",
+    "deploy": "npm run build && pm2 restart yojanasaathi-backend"
   },
   "dependencies": {
     "aws-sdk": "^2.1520.0",
